@@ -229,16 +229,23 @@ docker build -t $DOCKERHUB_USER/gestion-produits-pgsql:latest \
 docker push $DOCKERHUB_USER/gestion-produits-pgsql:latest
 ```
 
-### Déploiement variante MySQL
+### Déploiement des manifests
 
 ```bash
-bash kubernetes/mysql/deploy.sh $DOCKERHUB_USER
+kubectl apply -f kubernetes/mysql/
+kubectl apply -f kubernetes/pgsql/
 ```
 
-### Déploiement variante PostgreSQL
+### Créer les ConfigMaps d'initialisation SQL
 
 ```bash
-bash kubernetes/pgsql/deploy.sh $DOCKERHUB_USER
+kubectl create configmap db-init-sql \
+  --from-file=init.sql=gestion-produits/database/gestion_produits.sql \
+  -n gestion-produits
+
+kubectl create configmap db-pgsql-init-sql \
+  --from-file=init.sql=gestion-produits/database/gestion_produits_pgsql.sql \
+  -n gestion-produits
 ```
 
 ### Vérification
@@ -248,22 +255,25 @@ kubectl get pods    -n gestion-produits
 kubectl get ingress -n gestion-produits
 ```
 
+Tous les pods doivent être `1/1 Running`.
+
 ---
 
 ## 5. Accès aux applications
 
-Ajouter les entrées suivantes dans le fichier `hosts` :
-
+Fichier `hosts` :
 - **Linux / Mac :** `/etc/hosts`
 - **Windows :** `C:\Windows\System32\drivers\etc\hosts`
 
-```
-# Infra Docker
-X.X.X.X  gestion-produits.local
-X.X.X.X  gestion-produits-pgsql.local
+Les deux infras utilisent les mêmes hostnames — **décommenter le bloc correspondant à l'infra à tester** :
 
-# Infra Kubernetes (IP du master)
-Y.Y.Y.Y  gestion-produits.local
+```
+# === Infra Docker (terraform/docker-infra) ===
+# X.X.X.X  gestion-produits.local        ← docker_host_ip
+# X.X.X.X  gestion-produits-pgsql.local
+
+# === Infra Kubernetes (terraform/k8s-infra) ===
+Y.Y.Y.Y  gestion-produits.local           ← master_public_ip
 Y.Y.Y.Y  gestion-produits-pgsql.local
 ```
 

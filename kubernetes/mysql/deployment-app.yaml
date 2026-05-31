@@ -1,7 +1,7 @@
-# Remplacer VOTRE_DOCKERHUB par ton pseudo Docker Hub
+# Remplacer ranawane93 par ton pseudo Docker Hub
 # Construire et pousser l'image AVANT de déployer :
-#   docker build -t VOTRE_DOCKERHUB/gestion-produits-mysql:latest -f docker/app/Dockerfile .
-#   docker push VOTRE_DOCKERHUB/gestion-produits-mysql:latest
+#   docker build -t ranawane93/gestion-produits-mysql:latest -f docker/app/Dockerfile .
+#   docker push ranawane93/gestion-produits-mysql:latest
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: php-app
-          image: VOTRE_DOCKERHUB/gestion-produits-mysql:latest
+          image: ranawane93/gestion-produits-mysql:latest
           env:
             - name: DB_HOST
               value: db-service

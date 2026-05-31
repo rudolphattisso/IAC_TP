@@ -1,0 +1,26 @@
+# Ingress Traefik : point d'entrée public vers l'application
+# k3s inclut Traefik comme Ingress Controller par défaut
+# L'annotation tls active le certificat auto-signé de Traefik
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-ingress
+  namespace: gestion-produits
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  rules:
+    - host: gestion-produits.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app-service
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - gestion-produits.local

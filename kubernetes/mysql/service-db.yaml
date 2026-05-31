@@ -1,0 +1,14 @@
+# Service ClusterIP : MySQL accessible uniquement à l'intérieur du cluster
+# Le pod PHP se connecte via DB_HOST=db-service (pas d'exposition vers l'extérieur)
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-service
+  namespace: gestion-produits
+spec:
+  selector:
+    app: db
+  ports:
+    - port: 3306
+      targetPort: 3306
+  type: ClusterIP

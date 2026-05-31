@@ -1,0 +1,15 @@
+# Stockage persistant pour les données MySQL
+# ReadWriteOnce : un seul pod peut lire/écrire (correct — MySQL n'a qu'1 réplica)
+# La storage class "local-path" est celle par défaut de k3s
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: db-data-pvc
+  namespace: gestion-produits
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 2Gi

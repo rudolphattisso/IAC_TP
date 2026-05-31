@@ -1,0 +1,15 @@
+# Stockage persistant pour les images uploadées par les utilisateurs
+# ReadWriteOnce : fonctionne avec 1 réplica d'app (cas de ce TP)
+# Pour scaler à plusieurs réplicas, passer en ReadWriteMany avec un provisioner NFS ou Longhorn
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: uploads-pvc
+  namespace: gestion-produits
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path
+  resources:
+    requests:
+      storage: 1Gi

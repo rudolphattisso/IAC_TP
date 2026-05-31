@@ -1,0 +1,14 @@
+# Service ClusterIP : l'app est accessible dans le cluster via app-service:80
+# C'est l'Ingress (Traefik) qui expose vers l'extérieur, pas ce Service directement
+apiVersion: v1
+kind: Service
+metadata:
+  name: app-service
+  namespace: gestion-produits
+spec:
+  selector:
+    app: gestion-produits
+  ports:
+    - port: 80
+      targetPort: 80
+  type: ClusterIP

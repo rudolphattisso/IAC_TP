@@ -17,9 +17,7 @@ services:
       - app-network
 
   app:
-    build:
-      context: ../..
-      dockerfile: docker/app/Dockerfile
+    image: ranawane93/gestion-produits-mysql:latest
     environment:
       DB_HOST: db
       DB_USER: ${DB_USER}
@@ -65,9 +63,7 @@ services:
   # Tourne en parallèle de la variante MySQL sur le même réseau
 
   app-pgsql:
-    build:
-      context: ../..
-      dockerfile: docker/app-pgsql/Dockerfile
+    image: ranawane93/gestion-produits-pgsql:latest
     environment:
       DB_HOST: db-pgsql
       DB_USER: ${PGSQL_USER}

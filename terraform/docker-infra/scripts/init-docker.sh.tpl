@@ -30,7 +30,7 @@ printf 'PGSQL_PASSWORD=%s\n'      "${pgsql_password}"      >> .env
 printf 'PGSQL_DB=%s\n'            "${pgsql_db}"            >> .env
 
 # --- Démarrage de l'application ---
-docker compose up -d --build
+docker compose up -d
 
 echo "=== Déploiement terminé ==="
 echo "Logs : docker compose -f /opt/app/docker/compose/docker-compose.yml logs -f"

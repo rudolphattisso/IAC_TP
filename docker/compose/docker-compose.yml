@@ -57,6 +57,50 @@ services:
     networks:
       - app-network
 
+  # --- Variante PostgreSQL ---
+  # Accessible via https://gestion-produits-pgsql.local (URL distincte exigée par le sujet)
+  # Tourne en parallèle de la variante MySQL sur le même réseau
+
+  app-pgsql:
+    build:
+      context: ../..
+      dockerfile: docker/app-pgsql/Dockerfile
+    environment:
+      DB_HOST: db-pgsql
+      DB_USER: ${PGSQL_USER}
+      DB_PASSWORD: ${PGSQL_PASSWORD}
+      DB_NAME: ${PGSQL_DB}
+    volumes:
+      - uploads-pgsql:/var/www/html/uploads
+    depends_on:
+      db-pgsql:
+        condition: service_healthy
+    networks:
+      - app-network
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.app-pgsql.rule=Host(`gestion-produits-pgsql.local`)"
+      - "traefik.http.routers.app-pgsql.entrypoints=websecure"
+      - "traefik.http.routers.app-pgsql.tls=true"
+      - "traefik.http.services.app-pgsql.loadbalancer.server.port=80"
+
+  db-pgsql:
+    image: postgres:16
+    environment:
+      POSTGRES_DB: ${PGSQL_DB}
+      POSTGRES_USER: ${PGSQL_USER}
+      POSTGRES_PASSWORD: ${PGSQL_PASSWORD}
+    volumes:
+      - db-pgsql-data:/var/lib/postgresql/data
+      - ../../gestion-produits/database/gestion_produits_pgsql.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PGSQL_USER} -d ${PGSQL_DB}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - app-network
+
 networks:
   app-network:
     driver: bridge
@@ -64,3 +108,5 @@ networks:
 volumes:
   db-data:
   uploads:
+  db-pgsql-data:
+  uploads-pgsql:

@@ -1,4 +1,0 @@
-aws_region = "eu-west-3"
-key_name   = ""           # Nom de la key pair créée dans AWS Console > EC2 > Key Pairs
-my_ip_cidr = "0.0.0.0/0" # Remplacer par ton IP : curl ifconfig.me puis mettre <IP>/32
-k3s_token  = ""           # Chaîne aléatoire longue — ex: openssl rand -hex 32

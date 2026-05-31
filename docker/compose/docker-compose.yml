@@ -27,6 +27,9 @@ services:
       DB_NAME: ${DB_NAME}
     volumes:
       - uploads:/var/www/html/uploads
+    # Port direct pour test local — Traefik gère le routing en prod (Linux/AWS)
+    ports:
+      - "8080:80"
     depends_on:
       db:
         condition: service_healthy
@@ -72,6 +75,9 @@ services:
       DB_NAME: ${PGSQL_DB}
     volumes:
       - uploads-pgsql:/var/www/html/uploads
+    # Port direct pour test local
+    ports:
+      - "8081:80"
     depends_on:
       db-pgsql:
         condition: service_healthy

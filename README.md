@@ -317,55 +317,26 @@ cd terraform/docker-infra && terraform destroy
 cd terraform/k8s-infra && terraform destroy
 ```
 
-> Détruire les infras après correction pour éviter des frais AWS.
+> Les infrastructures AWS déployées seront détruites dans la semaine suivant la remise. Pour tester le déploiement, merci de le faire avant cette échéance ou de relancer `terraform apply` depuis le dépôt.
 
 ---
 
 ## Captures d'écran — Déploiement réalisé
 
-### Infrastructure Docker (EC2 t3.micro)
+**Instances AWS EC2 — 4 serveurs actifs (docker-host + k3s-master + 2 workers) :**
 
-**Conteneurs en cours d'exécution (`docker compose ps`) :**
+![AWS EC2 Dashboard](imgs/aws_dashboard.png)
 
-![Docker compose ps](doc/screenshots/docker-compose-ps.png)
+**Cluster Kubernetes — 3 nœuds Ready, 4 pods 1/1 Running :**
 
-**Application MySQL :**
+![kubectl get nodes et get pods](imgs/k8s.png)
 
-![App MySQL Docker](doc/screenshots/docker-app-mysql.png)
+**Application variante MySQL (`https://gestion-produits.local`) :**
 
-**Application PostgreSQL :**
+![App MySQL](imgs/gestion-produits.local.png)
 
-![App PostgreSQL Docker](doc/screenshots/docker-app-pgsql.png)
+**Application variante PostgreSQL (`https://gestion-produits-pgsql.local`) :**
 
----
-
-### Infrastructure Kubernetes (cluster k3s — 3 nœuds)
-
-**Nœuds Ready (`kubectl get nodes`) :**
-
-![Kubectl get nodes](doc/screenshots/k8s-nodes.png)
-
-**Pods Running (`kubectl get pods -n gestion-produits`) :**
-
-![Kubectl get pods](doc/screenshots/k8s-pods.png)
-
-**Application MySQL :**
-
-![App MySQL K8s](doc/screenshots/k8s-app-mysql.png)
-
-**Application PostgreSQL :**
-
-![App PostgreSQL K8s](doc/screenshots/k8s-app-pgsql.png)
+![App PostgreSQL](imgs/gestion-produits.loca_pgsql.png)
 
 ---
-
-## Décisions techniques
-
-| ADR | Décision |
-|---|---|
-| ADR-001 | Provider : AWS EC2 + k3s |
-| ADR-002 | Reverse proxy : Traefik v3 |
-| ADR-003 | Stockage K8s : `local-path` (RWO) — provisioner natif k3s, stockage local au nœud. Solution légère adaptée à un déploiement mono-réplica sur EC2 sans EFS/NFS. Suffit pour le TP ; en production, remplacer par un StorageClass RWX (EFS, Longhorn…) pour le stockage partagé. |
-| ADR-004 | Secrets K8s : Secrets natifs base64 |
-| ADR-005 | Migration PostgreSQL : surcharge partielle Dockerfile |
-| ADR-006 | Registry images : Docker Hub (ranawane93) |

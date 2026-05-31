@@ -306,13 +306,51 @@ cd terraform/k8s-infra && terraform destroy
 
 ---
 
+## Captures d'écran — Déploiement réalisé
+
+### Infrastructure Docker (EC2 t3.micro)
+
+**Conteneurs en cours d'exécution (`docker compose ps`) :**
+
+![Docker compose ps](doc/screenshots/docker-compose-ps.png)
+
+**Application MySQL :**
+
+![App MySQL Docker](doc/screenshots/docker-app-mysql.png)
+
+**Application PostgreSQL :**
+
+![App PostgreSQL Docker](doc/screenshots/docker-app-pgsql.png)
+
+---
+
+### Infrastructure Kubernetes (cluster k3s — 3 nœuds)
+
+**Nœuds Ready (`kubectl get nodes`) :**
+
+![Kubectl get nodes](doc/screenshots/k8s-nodes.png)
+
+**Pods Running (`kubectl get pods -n gestion-produits`) :**
+
+![Kubectl get pods](doc/screenshots/k8s-pods.png)
+
+**Application MySQL :**
+
+![App MySQL K8s](doc/screenshots/k8s-app-mysql.png)
+
+**Application PostgreSQL :**
+
+![App PostgreSQL K8s](doc/screenshots/k8s-app-pgsql.png)
+
+---
+
 ## Décisions techniques
 
 | ADR | Décision |
 |---|---|
 | ADR-001 | Provider : AWS EC2 + k3s |
 | ADR-002 | Reverse proxy : Traefik v3 |
-| ADR-003 | Stockage K8s : local-path (RWO) |
+| ADR-003 | Stockage K8s : `local-path` (RWO) — provisioner natif k3s, stockage local au nœud. Solution légère adaptée à un déploiement mono-réplica sur EC2 sans EFS/NFS. Suffit pour le TP ; en production, remplacer par un StorageClass RWX (EFS, Longhorn…) pour le stockage partagé. |
 | ADR-004 | Secrets K8s : Secrets natifs base64 |
 | ADR-005 | Migration PostgreSQL : surcharge partielle Dockerfile |
 | ADR-006 | Registry images : Docker Hub |

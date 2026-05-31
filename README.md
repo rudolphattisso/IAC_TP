@@ -37,6 +37,8 @@ graph TD
 
 ## Prérequis
 
+### Outils à installer
+
 | Outil | Version minimale | Usage |
 |---|---|---|
 | [Terraform](https://developer.hashicorp.com/terraform/install) | 1.5+ | Provisionnement AWS |
@@ -46,16 +48,38 @@ graph TD
 | Compte [Docker Hub](https://hub.docker.com) | — | Registry des images |
 | Compte AWS | — | Hébergement des EC2 |
 
-**Configurer les credentials AWS :**
+### Configurer AWS
+
+**1. Créer un utilisateur IAM avec droits admin :**
+1. Console AWS → **IAM > Users > Create user**
+2. Nom : `terraform-user`
+3. **Attach policies directly** → `AdministratorAccess`
+4. Onglet **Security credentials** → **Create access key** → CLI
+5. Noter l'`Access Key ID` et le `Secret Access Key` (affichés une seule fois)
+
+**2. Configurer AWS CLI :**
 ```bash
 aws configure
-# AWS Access Key ID     : <ta clé>
-# AWS Secret Access Key : <ta clé secrète>
-# Default region        : eu-west-3
+# AWS Access Key ID     : <Access Key ID>
+# AWS Secret Access Key : <Secret Access Key>
+# Default region name   : eu-west-3
+# Default output format : json
 ```
 
-**Créer une key pair SSH dans AWS Console :**  
-`EC2 > Key Pairs > Create key pair` — noter le nom, il sera utilisé dans les `tfvars`.
+Vérifier :
+```bash
+aws sts get-caller-identity
+```
+
+**3. Créer une key pair SSH dans AWS Console :**
+`EC2 > Key Pairs > Create key pair` — Type RSA, format `.pem` — télécharger et noter le nom.
+
+### Cloner le dépôt
+
+```bash
+git clone https://github.com/rudolphattisso/IAC_TP.git
+cd IAC_TP
+```
 
 ---
 
@@ -95,9 +119,9 @@ cp terraform.tfvars.example terraform.tfvars
 Éditer `terraform.tfvars` :
 ```hcl
 aws_region          = "eu-west-3"
-key_name            = "nom-de-ta-key-pair"
-my_ip_cidr          = "TON_IP/32"        # curl ifconfig.me
-repo_url            = "https://github.com/TON_COMPTE/IAC_TP.git"
+key_name            = "nom-de-ta-key-pair"   # nom exact créé dans AWS Console
+my_ip_cidr          = "TON_IP/32"            # curl ifconfig.me puis ajouter /32
+repo_url            = "https://github.com/rudolphattisso/IAC_TP.git"
 db_user             = "app"
 db_password         = "MotDePasseFort1!"
 db_name             = "gestion_produits"
@@ -124,17 +148,10 @@ terraform output
 # ssh_command    = "ssh -i <cle>.pem ec2-user@X.X.X.X"
 ```
 
-> L'application se déploie automatiquement au démarrage de l'instance via le script `user_data`.  
-> Attendre ~3 minutes après `apply` puis vérifier avec :
+> L'application se déploie automatiquement au démarrage de l'instance via `user_data`.  
+> Attendre ~3 minutes après `apply`.
 
-```bash
-# Lister les instances AWS en cours d'exécution
-aws ec2 describe-instances --region eu-west-3 \
-  --query "Reservations[*].Instances[*].{Name:Tags[?Key=='Name']|[0].Value,State:State.Name,IP:PublicIpAddress,Type:InstanceType}" \
-  --output table
-```
-
-> Si les conteneurs ne sont pas démarrés, se connecter en SSH et les lancer manuellement :
+Si les conteneurs ne sont pas démarrés, se connecter en SSH et les lancer manuellement :
 
 ```bash
 ssh -i <cle>.pem ec2-user@X.X.X.X
@@ -142,6 +159,25 @@ sudo chown -R ec2-user:ec2-user /opt/app
 cd /opt/app && git pull
 docker compose -f /opt/app/docker/compose/docker-compose.yml up -d
 ```
+
+### Vérification
+
+```bash
+docker compose -f /opt/app/docker/compose/docker-compose.yml ps
+# Tous les conteneurs doivent être "healthy" ou "running"
+```
+
+Ajouter dans le fichier `hosts` (`/etc/hosts` ou `C:\Windows\System32\drivers\etc\hosts`) :
+```
+X.X.X.X  gestion-produits.local
+X.X.X.X  gestion-produits-pgsql.local
+```
+
+Tester dans le navigateur :
+- `https://gestion-produits.local` → variante MySQL
+- `https://gestion-produits-pgsql.local` → variante PostgreSQL
+
+> Alerte certificat TLS auto-signé — cliquer "Continuer quand même".
 
 ---
 
@@ -159,8 +195,12 @@ cp terraform.tfvars.example terraform.tfvars
 aws_region = "eu-west-3"
 key_name   = "nom-de-ta-key-pair"
 my_ip_cidr = "TON_IP/32"
-k3s_token  = "$(openssl rand -hex 32)"  # générer un token fort
+k3s_token  = "une-chaine-aleatoire-longue-et-complexe"
 ```
+
+> Générer un token fort :
+> - Linux/Mac : `openssl rand -hex 32`
+> - Windows PowerShell : `-join ((1..64) | ForEach-Object { '{0:x}' -f (Get-Random -Max 16) })`
 
 ### Déploiement
 
@@ -170,64 +210,48 @@ terraform plan
 terraform apply
 ```
 
-### Récupération du kubeconfig
+### Résultats
 
 ```bash
-# Commande fournie par terraform output
-terraform output kubeconfig_command
-# Exemple :
+terraform output
+# master_public_ip = "X.X.X.X"
+# worker_public_ips = ["Y.Y.Y.Y", "Z.Z.Z.Z"]
+# ssh_master = "ssh -i <cle>.pem ec2-user@X.X.X.X"
+```
+
+### Récupération du kubeconfig
+
+**Linux / Mac :**
+```bash
 ssh -i <cle>.pem ec2-user@X.X.X.X \
   'sudo cat /etc/rancher/k3s/k3s.yaml' \
   | sed 's/127.0.0.1/X.X.X.X/g' > ~/.kube/config
+```
 
-# Vérifier que le cluster est opérationnel
+**Windows (PowerShell) :**
+```powershell
+ssh -i "$env:USERPROFILE\<cle>.pem" ec2-user@X.X.X.X 'sudo cat /etc/rancher/k3s/k3s.yaml' `
+  | ForEach-Object { $_ -replace '127.0.0.1', 'X.X.X.X' } `
+  | Set-Content "$env:USERPROFILE\.kube\config"
+```
+
+Si kubectl retourne une erreur TLS (`x509: certificate is valid for ... not X.X.X.X`) :
+```powershell
+(Get-Content "$env:USERPROFILE\.kube\config") `
+  -replace 'certificate-authority-data:.*', 'insecure-skip-tls-verify: true' `
+  | Set-Content "$env:USERPROFILE\.kube\config"
+```
+
+Vérifier que les 3 nœuds sont `Ready` :
+```bash
 kubectl get nodes
 ```
 
 ---
 
-## 3. Déploiement de l'application sur Docker
+## 3. Déploiement de l'application sur Kubernetes
 
-L'application est déployée automatiquement par Terraform via `user_data`. Pour redéployer manuellement :
-
-```bash
-# Se connecter au serveur
-ssh -i <cle>.pem ec2-user@X.X.X.X
-
-# Sur le serveur
-cd /opt/app/docker/compose
-docker compose ps          # vérifier l'état
-docker compose logs -f     # consulter les logs
-```
-
-### Fichier `.env` sur le serveur
-
-Le fichier `.env` est généré automatiquement par Terraform. Pour modifier les credentials :
-```bash
-nano /opt/app/docker/compose/.env
-docker compose up -d
-```
-
----
-
-## 4. Déploiement de l'application sur Kubernetes
-
-### Build et push des images Docker Hub
-
-```bash
-# Depuis la racine du repo — remplacer DOCKERHUB_USER
-export DOCKERHUB_USER=ton_pseudo_dockerhub
-
-# Image MySQL
-docker build -t $DOCKERHUB_USER/gestion-produits-mysql:latest \
-  -f docker/app/Dockerfile .
-docker push $DOCKERHUB_USER/gestion-produits-mysql:latest
-
-# Image PostgreSQL
-docker build -t $DOCKERHUB_USER/gestion-produits-pgsql:latest \
-  -f docker/app-pgsql/Dockerfile .
-docker push $DOCKERHUB_USER/gestion-produits-pgsql:latest
-```
+> Depuis la **racine du dépôt** (`IAC_TP/`).
 
 ### Déploiement des manifests
 
@@ -257,42 +281,33 @@ kubectl get ingress -n gestion-produits
 
 Tous les pods doivent être `1/1 Running`.
 
----
-
-## 5. Accès aux applications
-
-Fichier `hosts` :
-- **Linux / Mac :** `/etc/hosts`
-- **Windows :** `C:\Windows\System32\drivers\etc\hosts`
-
-Les deux infras utilisent les mêmes hostnames — **décommenter le bloc correspondant à l'infra à tester** :
-
+Mettre à jour le fichier `hosts` avec l'IP du master (remplacer ou commenter le bloc Docker) :
 ```
-# === Infra Docker (terraform/docker-infra) ===
-# X.X.X.X  gestion-produits.local        ← docker_host_ip
+# X.X.X.X  gestion-produits.local        ← Docker (commenter pour tester K8s)
 # X.X.X.X  gestion-produits-pgsql.local
 
-# === Infra Kubernetes (terraform/k8s-infra) ===
 Y.Y.Y.Y  gestion-produits.local           ← master_public_ip
 Y.Y.Y.Y  gestion-produits-pgsql.local
 ```
 
-> Les IPs sont fournies par `terraform output` de chaque infra.
-
-### URLs disponibles
-
-| Infra | Variante | URL | Identifiants |
-|---|---|---|---|
-| Docker | MySQL | https://gestion-produits.local | admin / password |
-| Docker | PostgreSQL | https://gestion-produits-pgsql.local | admin / password |
-| Kubernetes | MySQL | https://gestion-produits.local | admin / password |
-| Kubernetes | PostgreSQL | https://gestion-produits-pgsql.local | admin / password |
-
-> Le navigateur affichera une alerte certificat (TLS auto-signé) — cliquer sur "Continuer quand même".
+Tester dans le navigateur :
+- `https://gestion-produits.local` → variante MySQL sur K8s
+- `https://gestion-produits-pgsql.local` → variante PostgreSQL sur K8s
 
 ---
 
-## 6. Nettoyage
+## 4. Identifiants de connexion
+
+| Infra | Variante | URL | Login | Mot de passe |
+|---|---|---|---|---|
+| Docker | MySQL | https://gestion-produits.local | admin | password |
+| Docker | PostgreSQL | https://gestion-produits-pgsql.local | admin | password |
+| Kubernetes | MySQL | https://gestion-produits.local | admin | password |
+| Kubernetes | PostgreSQL | https://gestion-produits-pgsql.local | admin | password |
+
+---
+
+## 5. Nettoyage
 
 ```bash
 # Supprimer l'infra Docker
@@ -302,7 +317,7 @@ cd terraform/docker-infra && terraform destroy
 cd terraform/k8s-infra && terraform destroy
 ```
 
-> Penser à détruire les infras après correction pour éviter des frais AWS.
+> Détruire les infras après correction pour éviter des frais AWS.
 
 ---
 
@@ -353,4 +368,4 @@ cd terraform/k8s-infra && terraform destroy
 | ADR-003 | Stockage K8s : `local-path` (RWO) — provisioner natif k3s, stockage local au nœud. Solution légère adaptée à un déploiement mono-réplica sur EC2 sans EFS/NFS. Suffit pour le TP ; en production, remplacer par un StorageClass RWX (EFS, Longhorn…) pour le stockage partagé. |
 | ADR-004 | Secrets K8s : Secrets natifs base64 |
 | ADR-005 | Migration PostgreSQL : surcharge partielle Dockerfile |
-| ADR-006 | Registry images : Docker Hub |
+| ADR-006 | Registry images : Docker Hub (ranawane93) |

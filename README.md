@@ -102,6 +102,9 @@ db_user             = "app"
 db_password         = "MotDePasseFort1!"
 db_name             = "gestion_produits"
 mysql_root_password = "MotDePasseRoot1!"
+pgsql_user          = "app_pgsql"
+pgsql_password      = "MotDePasseFort1!"
+pgsql_db            = "gestion_produits"
 ```
 
 ### Déploiement
@@ -122,7 +125,23 @@ terraform output
 ```
 
 > L'application se déploie automatiquement au démarrage de l'instance via le script `user_data`.  
-> Attendre ~3 minutes après `apply` pour que Docker Compose soit opérationnel.
+> Attendre ~3 minutes après `apply` puis vérifier avec :
+
+```bash
+# Lister les instances AWS en cours d'exécution
+aws ec2 describe-instances --region eu-west-3 \
+  --query "Reservations[*].Instances[*].{Name:Tags[?Key=='Name']|[0].Value,State:State.Name,IP:PublicIpAddress,Type:InstanceType}" \
+  --output table
+```
+
+> Si les conteneurs ne sont pas démarrés, se connecter en SSH et les lancer manuellement :
+
+```bash
+ssh -i <cle>.pem ec2-user@X.X.X.X
+sudo chown -R ec2-user:ec2-user /opt/app
+cd /opt/app && git pull
+docker compose -f /opt/app/docker/compose/docker-compose.yml up -d
+```
 
 ---
 

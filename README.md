@@ -172,14 +172,28 @@ terraform apply
 
 ### Récupération du kubeconfig
 
+**Linux / Mac :**
 ```bash
-# Commande fournie par terraform output
-terraform output kubeconfig_command
-# Exemple :
 ssh -i <cle>.pem ec2-user@X.X.X.X \
   'sudo cat /etc/rancher/k3s/k3s.yaml' \
   | sed 's/127.0.0.1/X.X.X.X/g' > ~/.kube/config
+```
 
+**Windows (PowerShell) :**
+```powershell
+ssh -i "$env:USERPROFILE\<cle>.pem" ec2-user@X.X.X.X 'sudo cat /etc/rancher/k3s/k3s.yaml' `
+  | ForEach-Object { $_ -replace '127.0.0.1', 'X.X.X.X' } `
+  | Set-Content "$env:USERPROFILE\.kube\config"
+```
+
+Si kubectl retourne une erreur TLS (`x509: certificate is valid for ... not X.X.X.X`) :
+```powershell
+(Get-Content "$env:USERPROFILE\.kube\config") `
+  -replace 'certificate-authority-data:.*', 'insecure-skip-tls-verify: true' `
+  | Set-Content "$env:USERPROFILE\.kube\config"
+```
+
+```bash
 # Vérifier que le cluster est opérationnel
 kubectl get nodes
 ```
@@ -212,21 +226,19 @@ docker compose up -d
 
 ## 4. Déploiement de l'application sur Kubernetes
 
-### Build et push des images Docker Hub
+### Images Docker Hub
 
+Les images sont déjà disponibles sur Docker Hub :
+- `ranawane93/gestion-produits-mysql:latest`
+- `ranawane93/gestion-produits-pgsql:latest`
+
+Pour les rebuilder si nécessaire :
 ```bash
-# Depuis la racine du repo — remplacer DOCKERHUB_USER
-export DOCKERHUB_USER=ton_pseudo_dockerhub
+docker build -t ranawane93/gestion-produits-mysql:latest -f docker/app/Dockerfile .
+docker push ranawane93/gestion-produits-mysql:latest
 
-# Image MySQL
-docker build -t $DOCKERHUB_USER/gestion-produits-mysql:latest \
-  -f docker/app/Dockerfile .
-docker push $DOCKERHUB_USER/gestion-produits-mysql:latest
-
-# Image PostgreSQL
-docker build -t $DOCKERHUB_USER/gestion-produits-pgsql:latest \
-  -f docker/app-pgsql/Dockerfile .
-docker push $DOCKERHUB_USER/gestion-produits-pgsql:latest
+docker build -t ranawane93/gestion-produits-pgsql:latest -f docker/app-pgsql/Dockerfile .
+docker push ranawane93/gestion-produits-pgsql:latest
 ```
 
 ### Déploiement des manifests

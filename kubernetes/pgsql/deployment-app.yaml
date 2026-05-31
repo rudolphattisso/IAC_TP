@@ -1,0 +1,55 @@
+# Remplacer VOTRE_DOCKERHUB par ton pseudo Docker Hub
+# Construire et pousser l'image AVANT de déployer :
+#   docker build -t VOTRE_DOCKERHUB/gestion-produits-pgsql:latest -f docker/app-pgsql/Dockerfile .
+#   docker push VOTRE_DOCKERHUB/gestion-produits-pgsql:latest
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: app-pgsql
+  namespace: gestion-produits
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gestion-produits-pgsql
+  template:
+    metadata:
+      labels:
+        app: gestion-produits-pgsql
+    spec:
+      containers:
+        - name: php-app-pgsql
+          image: VOTRE_DOCKERHUB/gestion-produits-pgsql:latest
+          env:
+            - name: DB_HOST
+              value: db-pgsql-service
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-pgsql-secret
+                  key: db-user
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-pgsql-secret
+                  key: db-password
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: db-pgsql-secret
+                  key: db-name
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: uploads
+              mountPath: /var/www/html/uploads
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 80
+            initialDelaySeconds: 10
+            periodSeconds: 10
+      volumes:
+        - name: uploads
+          persistentVolumeClaim:
+            claimName: uploads-pgsql-pvc

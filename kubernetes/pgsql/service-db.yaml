@@ -1,0 +1,14 @@
+# Service ClusterIP : PostgreSQL accessible uniquement en interne
+# Le pod PHP se connecte via DB_HOST=db-pgsql-service sur le port 5432
+apiVersion: v1
+kind: Service
+metadata:
+  name: db-pgsql-service
+  namespace: gestion-produits
+spec:
+  selector:
+    app: db-pgsql
+  ports:
+    - port: 5432
+      targetPort: 5432
+  type: ClusterIP

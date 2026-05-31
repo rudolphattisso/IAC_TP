@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: db-pgsql
+  namespace: gestion-produits
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: db-pgsql
+  template:
+    metadata:
+      labels:
+        app: db-pgsql
+    spec:
+      containers:
+        - name: postgres
+          image: postgres:16
+          env:
+            # Variables spécifiques à l'image PostgreSQL (différentes de MySQL)
+            - name: POSTGRES_USER
+              valueFrom:
+                secretKeyRef:
+                  name: db-pgsql-secret
+                  key: db-user
+            - name: POSTGRES_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: db-pgsql-secret
+                  key: db-password
+            - name: POSTGRES_DB
+              valueFrom:
+                secretKeyRef:
+                  name: db-pgsql-secret
+                  key: db-name
+          ports:
+            - containerPort: 5432
+          volumeMounts:
+            - name: db-data
+              mountPath: /var/lib/postgresql/data
+            - name: init-sql
+              mountPath: /docker-entrypoint-initdb.d
+          readinessProbe:
+            exec:
+              command: ["pg_isready", "-U", "app", "-d", "gestion_produits"]
+            initialDelaySeconds: 15
+            periodSeconds: 10
+            failureThreshold: 5
+          livenessProbe:
+            exec:
+              command: ["pg_isready", "-U", "app", "-d", "gestion_produits"]
+            initialDelaySeconds: 30
+            periodSeconds: 15
+      volumes:
+        - name: db-data
+          persistentVolumeClaim:
+            claimName: db-pgsql-data-pvc
+        - name: init-sql
+          configMap:
+            name: db-pgsql-init-sql

@@ -1,0 +1,25 @@
+# URL dédiée pour la variante PostgreSQL — exigée par le sujet
+# gestion-produits-pgsql.local est distinct de gestion-produits.local (MySQL)
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: app-pgsql-ingress
+  namespace: gestion-produits
+  annotations:
+    traefik.ingress.kubernetes.io/router.entrypoints: websecure
+    traefik.ingress.kubernetes.io/router.tls: "true"
+spec:
+  rules:
+    - host: gestion-produits-pgsql.local
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: app-pgsql-service
+                port:
+                  number: 80
+  tls:
+    - hosts:
+        - gestion-produits-pgsql.local

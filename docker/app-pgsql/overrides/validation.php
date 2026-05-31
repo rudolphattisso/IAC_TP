@@ -1,8 +1,8 @@
 <?php
 
-    include 'connect.php';
+    include_once 'connect.php';
 
-    $action = (isset($_POST['action'])) ? $_POST['action'] : $_GET['action'];
+    $action = isset($_POST['action']) ? $_POST['action'] : $_GET['action'];
 
     switch ($action) {
 
@@ -17,8 +17,7 @@
             $res->execute();
             if ($res) {
 
-                // PostgreSQL : lastInsertId() nécessite le nom de la séquence.
-                // La séquence est créée automatiquement par SERIAL sous le nom <table>_<colonne>_seq.
+                // PostgreSQL : lastInsertId() nécessite le nom de la séquence SERIAL
                 $PRO_id = $db->lastInsertId('produits_PRO_id_seq');
 
                 foreach ($_FILES["PRO_ressources"]["error"] as $key => $error) {
@@ -83,28 +82,25 @@
 
 
         case 'supprimer_ressource':
-            if(isset($_POST['RE_id'])) {
+            if (isset($_POST['RE_id'])) {
 
                 $sql = "SELECT * FROM ressources WHERE RE_id = ?";
                 $res = $db->prepare($sql);
                 $res->bindParam(1, $_POST['RE_id']);
                 $res->execute();
                 $res = $res->fetchAll(PDO::FETCH_ASSOC);
-                if(count($res) > 0) {
+                if (!empty($res)) {
+                    // PostgreSQL retourne les noms de colonnes en minuscules
                     $ressource = $res[0];
 
                     $sql = "DELETE FROM ressources WHERE RE_id = ?";
                     $res = $db->prepare($sql);
                     $res->bindParam(1, $_POST['RE_id']);
                     $res->execute();
-                    if ($res) {
-                        if (file_exists($ressource['RE_url'])) {
-                            unlink($ressource['RE_url']);
-                        }
-                        echo 'OK';
-                    } else {
-                        echo 'NOK';
+                    if ($res && file_exists($ressource['re_url'])) {
+                        unlink($ressource['re_url']);
                     }
+                    echo $res ? 'OK' : 'NOK';
                 } else {
                     echo 'NOK';
                 }
@@ -113,31 +109,29 @@
 
 
         case 'supprimer_produit':
-            if(isset($_POST['PRO_id'])) {
+            if (isset($_POST['PRO_id'])) {
 
                 $sql = "SELECT * FROM produits WHERE PRO_id = ?";
                 $res = $db->prepare($sql);
                 $res->bindParam(1, $_POST['PRO_id']);
                 $res->execute();
                 $res = $res->fetchAll(PDO::FETCH_ASSOC);
-                if(count($res) > 0) {
-                    $produit = $res[0];
+                if (!empty($res)) {
 
                     $sql = "SELECT * FROM ressources WHERE PRO_id = ?";
                     $res2 = $db->prepare($sql);
                     $res2->bindParam(1, $_POST['PRO_id']);
                     $res2->execute();
                     $ressources = $res2->fetchAll(PDO::FETCH_ASSOC);
-                    foreach($ressources as $ressource) {
-                        $RE_id = $ressource['RE_id'];
+                    foreach ($ressources as $ressource) {
+                        // PostgreSQL retourne les noms de colonnes en minuscules
+                        $RE_id = $ressource['re_id'];
                         $sql = "DELETE FROM ressources WHERE RE_id = ?";
                         $res = $db->prepare($sql);
                         $res->bindParam(1, $RE_id);
                         $res->execute();
-                        if ($res) {
-                            if (file_exists($ressource['RE_url'])) {
-                                unlink($ressource['RE_url']);
-                            }
+                        if ($res && file_exists($ressource['re_url'])) {
+                            unlink($ressource['re_url']);
                         }
                     }
 
@@ -145,11 +139,7 @@
                     $res = $db->prepare($sql);
                     $res->bindParam(1, $_POST['PRO_id']);
                     $res->execute();
-                    if ($res) {
-                        echo 'OK';
-                    } else {
-                        echo 'NOK';
-                    }
+                    echo $res ? 'OK' : 'NOK';
 
                 } else {
                     echo 'NOK';
@@ -158,10 +148,6 @@
             break;
 
 
-
         default:
             break;
     }
-
-
-?>

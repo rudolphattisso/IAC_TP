@@ -2,7 +2,14 @@ aws_region          = "eu-west-3"
 key_name            = ""              # Nom de la key pair créée dans AWS Console > EC2 > Key Pairs
 my_ip_cidr          = "0.0.0.0/0"   # Remplacer par ton IP : curl ifconfig.me puis mettre <IP>/32
 repo_url            = ""              # ex: https://github.com/ton-compte/IAC_TP.git
+
+# Variante MySQL
 db_user             = "app"
-db_password         = ""              # Choisir un mot de passe fort
+db_password         = ""              # Mot de passe fort
 db_name             = "gestion_produits"
-mysql_root_password = ""              # Choisir un mot de passe fort différent
+mysql_root_password = ""              # Mot de passe fort différent
+
+# Variante PostgreSQL
+pgsql_user          = "app_pgsql"
+pgsql_password      = ""              # Mot de passe fort
+pgsql_db            = "gestion_produits"

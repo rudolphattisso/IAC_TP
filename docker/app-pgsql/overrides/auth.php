@@ -15,11 +15,11 @@
         $stmt->bindParam(2, $hashed);
         $stmt->execute();
         $res = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if ($res != false) {
-
+        if (!empty($res)) {
             if ( count($res) > 0) {
                 $utilisateur = $res[0];
-                $_SESSION['login'] = $utilisateur['US_login'];
+                // PostgreSQL retourne les noms de colonnes en minuscules
+                $_SESSION['login'] = $utilisateur['us_login'];
                 header("Location: home.php");
             } else {
                 header("Location: index.php");

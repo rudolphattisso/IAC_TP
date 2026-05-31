@@ -25,6 +25,9 @@ printf 'DB_USER=%s\n'             "${db_user}"             >  .env
 printf 'DB_PASSWORD=%s\n'         "${db_password}"         >> .env
 printf 'DB_NAME=%s\n'             "${db_name}"             >> .env
 printf 'MYSQL_ROOT_PASSWORD=%s\n' "${mysql_root_password}" >> .env
+printf 'PGSQL_USER=%s\n'          "${pgsql_user}"          >> .env
+printf 'PGSQL_PASSWORD=%s\n'      "${pgsql_password}"      >> .env
+printf 'PGSQL_DB=%s\n'            "${pgsql_db}"            >> .env
 
 # --- Démarrage de l'application ---
 docker compose up -d --build

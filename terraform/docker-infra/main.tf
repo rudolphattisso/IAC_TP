@@ -66,6 +66,9 @@ module "docker_host" {
     db_password         = var.db_password
     db_name             = var.db_name
     mysql_root_password = var.mysql_root_password
+    pgsql_user          = var.pgsql_user
+    pgsql_password      = var.pgsql_password
+    pgsql_db            = var.pgsql_db
   })
 
   tags = {

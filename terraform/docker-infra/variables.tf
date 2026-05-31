@@ -43,3 +43,21 @@ variable "mysql_root_password" {
   type        = string
   sensitive   = true
 }
+
+variable "pgsql_user" {
+  description = "Utilisateur PostgreSQL applicatif"
+  type        = string
+  default     = "app_pgsql"
+}
+
+variable "pgsql_password" {
+  description = "Mot de passe PostgreSQL applicatif"
+  type        = string
+  sensitive   = true
+}
+
+variable "pgsql_db" {
+  description = "Nom de la base PostgreSQL"
+  type        = string
+  default     = "gestion_produits"
+}
